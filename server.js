@@ -10,7 +10,10 @@ const Uploader = require("./Uploader");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const upload = multer({ storage: multer.memoryStorage() });
+
+// Configuração do Multer armazenando em memória para repasse imediato ao Uploader
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 const uploaderInstance = new Uploader();
 
 const JWT_SECRET = "GHOST_SUBMUNDO_EXPRESS_RENDER_2026";
@@ -25,22 +28,16 @@ function loadDB() {
     const initialData = {
       users: [],
       products: [
-        { id: 1, name: "Espada Sombria", rarity: "Lendário", price: 1500, image: "https://images.unsplash.com/photo-1580610447943-eebd4a3b5c44?auto=format&fit=crop&w=300&q=80" },
-        { id: 2, name: "Arma de Energia", rarity: "Épico", price: 1250, image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=300&q=80" },
-        { id: 3, name: "Capuz do Fantasma", rarity: "Lendário", price: 800, image: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&w=300&q=80" },
-        { id: 4, name: "Asas Neon", rarity: "Épico", price: 950, image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=300&q=80" },
-        { id: 5, name: "Orbe do Caos", rarity: "Mítico", price: 2000, image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=300&q=80" }
+        { id: 101, name: "Espada Sombria", rarity: "Lendário", price: 1500, image: "https://images.unsplash.com/photo-1580610447943-eebd4a3b5c44?w=400" },
+        { id: 102, name: "Arma de Energia", rarity: "Épico", price: 1250, image: "https://images.unsplash.com/photo-1595590424283-b8f17842773f?w=400" },
+        { id: 103, name: "Capuz do Fantasma", rarity: "Lendário", price: 800, image: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?w=400" }
       ],
       promoCodes: []
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2));
     return initialData;
   }
-  try {
-    return JSON.parse(fs.readFileSync(DB_FILE, "utf-8"));
-  } catch (e) {
-    return { users: [], products: [], promoCodes: [] };
-  }
+  return JSON.parse(fs.readFileSync(DB_FILE, "utf-8"));
 }
 
 function saveDB(data) {
@@ -50,22 +47,24 @@ function saveDB(data) {
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
-  if (!token) return res.status(401).json({ error: "Token não fornecido." });
+  if (!token) return res.status(401).json({ error: "Chave de sessão ausente." });
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: "Sessão expirada." });
+    if (err) return res.status(403).json({ error: "Sessão expirada ou revogada." });
     req.user = user;
     next();
   });
 }
 
+// ENDPOINTS DO SISTEMA
 app.post("/api/register", async (req, res) => {
   const { username, password, isMaster } = req.body;
-  if (!username || !password) return res.status(400).json({ error: "Campos obrigatórios ausentes." });
+  if (!username || !password) return res.status(400).json({ error: "Parâmetros incompletos." });
 
   const db = loadDB();
-  const exists = db.users.find(u => u.username.toLowerCase() === username.toLowerCase());
-  if (exists) return res.status(400).json({ error: "Este usuário já está cadastrado." });
+  if (db.users.find(u => u.username.toLowerCase() === username.toLowerCase())) {
+    return res.status(400).json({ error: "Este codinome já está em uso na rede." });
+  }
 
   const hashedPassword = await bcrypt.hash(password, 10);
   const user = {
@@ -73,7 +72,6 @@ app.post("/api/register", async (req, res) => {
     username,
     password: hashedPassword,
     role: isMaster ? "MASTER" : "USER",
-    saldoBancario: 15750.00,
     ghostCoins: 8250
   };
   db.users.push(user);
@@ -85,43 +83,40 @@ app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
   const db = loadDB();
   const user = db.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+  
   if (!user || !(await bcrypt.compare(password, user.password))) {
-    return res.status(400).json({ error: "Usuário ou senha incorretos." });
+    return res.status(400).json({ error: "Credenciais de acesso incorretas." });
   }
-
+  
   const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
-  res.json({ token, role: user.role, username: user.username });
+  res.json({ token, role: user.role });
 });
 
 app.get("/api/user/profile", authenticateToken, (req, res) => {
   const db = loadDB();
   const user = db.users.find(u => u.id === req.user.id);
-  if (!user) return res.status(404).json({ error: "Perfil não encontrado." });
-  res.json({
-    username: user.username,
-    role: user.role,
-    saldoBancario: user.saldoBancario,
-    ghostCoins: user.ghostCoins
-  });
+  if (!user) return res.status(404).json({ error: "Perfil não localizado." });
+  res.json({ username: user.username, role: user.role, ghostCoins: user.ghostCoins });
 });
 
 app.get("/api/products", (req, res) => {
-  const db = loadDB();
-  res.json(db.products);
+  res.json(loadDB().products);
 });
 
+// UPLOAD REAL DE IMAGENS MULTIPART E ENVIO AO CATBOX
 app.post("/api/products/create", authenticateToken, upload.single("image"), async (req, res) => {
-  if (req.user.role !== "MASTER") return res.status(403).json({ error: "Acesso restrito MASTER." });
+  if (req.user.role !== "MASTER") return res.status(403).json({ error: "Permissão MASTER exigida." });
   
   try {
     const { name, rarity, price } = req.body;
     if (!name || !rarity || !price || !req.file) {
-      return res.status(400).json({ error: "Todos os campos e a imagem são obrigatórios." });
+      return res.status(400).json({ error: "Dados cadastrais ou arquivo de imagem ausentes." });
     }
 
+    // Processamento do buffer binário da imagem enviado pelo formulário frontend
     const remoteUrl = await uploaderInstance.catbox(req.file.buffer);
+    
     const db = loadDB();
-
     const newProduct = {
       id: Date.now(),
       name,
@@ -129,19 +124,18 @@ app.post("/api/products/create", authenticateToken, upload.single("image"), asyn
       price: parseInt(price),
       image: remoteUrl
     };
-    db.products.push(newProduct);
+    
+    db.products.unshift(newProduct);
     saveDB(db);
-    res.status(201).json({ success: true, product: newProduct });
+    res.status(201).json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: `Falha crítica no upload: ${err.message}` });
   }
 });
 
 app.post("/api/admin/generate-code", authenticateToken, (req, res) => {
-  if (req.user.role !== "MASTER") return res.status(403).json({ error: "Restrito MASTER." });
-  
+  if (req.user.role !== "MASTER") return res.status(403).json({ error: "Acesso administrativo negado." });
   const { amount, type } = req.body;
-  if (!amount || !type) return res.status(400).json({ error: "Parâmetros inválidos." });
 
   const code = "GHOST-" + crypto.randomBytes(4).toString("hex").toUpperCase();
   const db = loadDB();
@@ -154,34 +148,13 @@ app.post("/api/user/redeem-code", authenticateToken, (req, res) => {
   const { code } = req.body;
   const db = loadDB();
   const promo = db.promoCodes.find(p => p.code === code.toUpperCase() && p.active);
-  if (!promo) return res.status(400).json({ error: "Código inválido, expirado ou já utilizado." });
+  if (!promo) return res.status(400).json({ error: "Código promocional inválido ou já resgatado." });
 
   const user = db.users.find(u => u.id === req.user.id);
-  if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
-
-  if (promo.type === "GC") user.ghostCoins += promo.amount;
-  if (promo.type === "BRL") user.saldoBancario += promo.amount;
-
+  user.ghostCoins += promo.amount;
   promo.active = false;
   saveDB(db);
-  res.json({ success: true, message: `Código ativado! +${promo.amount} ${promo.type} adicionados.` });
-});
-
-app.post("/api/bank/buy-gc", authenticateToken, (req, res) => {
-  const { amountGC } = req.body;
-  const numericAmount = parseInt(amountGC);
-  if (isNaN(numericAmount) || numericAmount <= 0) return res.status(400).json({ error: "Quantidade inválida." });
-  
-  const cost = numericAmount * 0.10;
-  const db = loadDB();
-  const user = db.users.find(u => u.id === req.user.id);
-
-  if (user.saldoBancario < cost) return res.status(400).json({ error: "Saldo em R$ insuficiente para concluir a conversão." });
-
-  user.saldoBancario -= cost;
-  user.ghostCoins += numericAmount;
-  saveDB(db);
-  res.json({ success: true });
+  res.json({ success: true, message: `Código ativado! +${promo.amount} GC creditados.` });
 });
 
 app.get("*", (req, res) => {
@@ -189,5 +162,5 @@ app.get("*", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Servidor ativo na porta ${PORT}`);
+  console.log(`Servidor de Loja ativo e escutando na porta ${PORT}`);
 });
