@@ -3,211 +3,232 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ghost Store & Bank</title>
+  <title>Ghost Store & Bank - Render Edition</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { background-color: #030308; color: #f1f1f7; font-family: 'Segoe UI', Roboto, sans-serif; }
-    .neon-glow-purple { box-shadow: 0 0 20px rgba(168, 85, 247, 0.25); border: 1px solid rgba(168, 85, 247, 0.4); }
-    .neon-glow-gold { box-shadow: 0 0 20px rgba(234, 179, 8, 0.25); border: 1px solid rgba(234, 179, 8, 0.4); }
-    .neon-glow-red { box-shadow: 0 0 20px rgba(239, 68, 68, 0.25); border: 1px solid rgba(239, 68, 68, 0.4); }
-    .neon-glow-blue { box-shadow: 0 0 20px rgba(59, 130, 246, 0.25); border: 1px solid rgba(59, 130, 246, 0.4); }
-    .click-pop { transition: transform 0.1s ease, filter 0.1s ease; }
-    .click-pop:active { transform: scale(0.96); filter: brightness(1.2); }
+    body { background-color: #020205; color: #f1f1f7; font-family: 'Segoe UI', Roboto, sans-serif; overflow-x: hidden; }
+    .neon-glow-purple { box-shadow: 0 0 25px rgba(168, 85, 247, 0.4); border: 1px solid rgba(168, 85, 247, 0.6); }
+    .neon-glow-gold { box-shadow: 0 0 25px rgba(234, 179, 8, 0.4); border: 1px solid rgba(234, 179, 8, 0.6); }
+    .neon-glow-red { box-shadow: 0 0 25px rgba(239, 68, 68, 0.4); border: 1px solid rgba(239, 68, 68, 0.6); }
+    .neon-glow-blue { box-shadow: 0 0 25px rgba(59, 130, 246, 0.4); border: 1px solid rgba(59, 130, 246, 0.6); }
+    
+    .btn-animate { transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .btn-animate:active { transform: scale(0.92); filter: brightness(1.3); box-shadow: 0 0 30px rgba(168, 85, 247, 0.8); }
+    
+    .card-click { transition: all 0.2s ease; }
+    .card-click:active { transform: scale(0.95) rotate(-0.5deg); filter: saturate(1.4) brightness(1.2); }
+    
+    @keyframes clickFlash {
+      0% { background-color: rgba(255, 255, 255, 0.15); }
+      100% { background-color: transparent; }
+    }
+    .flash-active:active { animation: clickFlash 0.3s ease-out; }
   </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-8 min-h-screen flex flex-col justify-between">
 
-  <div id="auth-screen" class="max-w-md mx-auto my-16 bg-[#090914] p-8 rounded-xl border border-purple-900/60 shadow-2xl">
+  <div id="toast" class="fixed top-5 right-5 z-50 transform translate-x-80 transition-transform duration-300 bg-zinc-900 border border-purple-500 p-4 rounded-xl shadow-2xl hidden max-w-sm">
+    <p id="toast-text" class="text-xs font-bold font-mono text-purple-400"></p>
+  </div>
+
+  <div id="auth-screen" class="max-w-md w-full mx-auto my-auto bg-[#07070f] p-8 rounded-2xl border border-purple-900/80 shadow-[0_0_50px_rgba(0,0,0,0.8)]">
     <div class="text-center mb-8">
-      <h2 class="text-3xl font-black tracking-widest text-purple-500">GHOST STORE</h2>
-      <p class="text-xs text-gray-400 mt-1">O MERCADO DO SUBMUNDO DIGITAL</p>
+      <h2 class="text-4xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-400">GHOST STORE</h2>
+      <p class="text-[10px] text-gray-400 mt-1 font-mono tracking-wider">PLATAFORMA INTEGRADA HOSPEDADA NO RENDER</p>
     </div>
     <div class="space-y-4">
-      <input id="auth-user" type="text" placeholder="Username" class="w-full bg-[#030308] p-3 rounded-lg border border-purple-900/60 focus:outline-none focus:border-purple-500 text-sm">
-      <input id="auth-pass" type="password" placeholder="Password" class="w-full bg-[#030308] p-3 rounded-lg border border-purple-900/60 focus:outline-none focus:border-purple-500 text-sm">
-      <div class="flex items-center space-x-2 py-1">
-        <input type="checkbox" id="auth-master" class="w-4 h-4 rounded bg-black border-purple-900 text-purple-600 focus:ring-0">
-        <label for="auth-master" class="text-xs text-gray-400 cursor-pointer select-none">Habilitar privilégios de usuário MASTER (Dono)</label>
+      <div>
+        <label class="text-[10px] uppercase text-gray-400 font-mono block mb-1">Apelido de Acesso</label>
+        <input id="auth-user" type="text" placeholder="ex: Ghost_X" class="w-full bg-[#020205] p-3.5 rounded-xl border border-purple-900/60 focus:outline-none focus:border-purple-500 text-sm font-mono text-white">
       </div>
-      <button onclick="login()" class="click-pop w-full bg-purple-600 hover:bg-purple-500 p-3 rounded-lg font-bold tracking-wider text-sm transition">CONECTAR</button>
-      <button onclick="register()" class="click-pop w-full bg-transparent border border-purple-800 text-purple-400 hover:bg-purple-950/40 p-3 rounded-lg font-medium text-sm transition">CRIAR NOVA CONTA</button>
+      <div>
+        <label class="text-[10px] uppercase text-gray-400 font-mono block mb-1">Chave Criptográfica (Senha)</label>
+        <input id="auth-pass" type="password" placeholder="••••••••" class="w-full bg-[#020205] p-3.5 rounded-xl border border-purple-900/60 focus:outline-none focus:border-purple-500 text-sm font-mono text-white">
+      </div>
+      <div class="flex items-center space-x-2 py-2">
+        <input type="checkbox" id="auth-master" class="w-4 h-4 rounded bg-black border-purple-900 text-purple-600 focus:ring-0 cursor-pointer">
+        <label for="auth-master" class="text-xs text-gray-400 cursor-pointer select-none font-mono">Habilitar privilégios MASTER (Administrador)</label>
+      </div>
+      <button onclick="login()" class="btn-animate w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 p-3.5 rounded-xl font-black tracking-widest text-xs transition shadow-lg">LOGAR NA REDE</button>
+      <button onclick="register()" class="btn-animate w-full bg-transparent border border-purple-900 text-purple-400 hover:bg-purple-950/20 p-3.5 rounded-xl font-bold text-xs transition">REGISTRAR NOVA IDENTIDADE</button>
     </div>
   </div>
 
-  <div id="main-app" class="hidden max-w-6xl mx-auto space-y-6 animate-fade-in">
-    
-    <header class="flex flex-col md:flex-row justify-between items-center bg-[#090914] p-6 rounded-xl border border-purple-900/40 gap-4">
-      <div>
-        <div class="flex items-center space-x-3">
-          <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
-          <h1 id="display-username" class="text-2xl font-black tracking-wide">Ghost_Player</h1>
+  <div id="main-app" class="hidden max-w-6xl w-full mx-auto space-y-6">
+    <header class="flex flex-col md:flex-row justify-between items-center bg-[#07070f] p-6 rounded-2xl border border-purple-900/40 gap-4 shadow-xl">
+      <div class="flex items-center space-x-4">
+        <div class="relative flex h-3 w-3">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
         </div>
-        <p id="display-role" class="text-xs text-purple-400 font-mono mt-0.5">NÍVEL 45 • MASTER</p>
+        <div>
+          <h1 id="display-username" class="text-2xl font-black tracking-wide text-zinc-100">---</h1>
+          <p id="display-role" class="text-[10px] text-purple-400 font-mono tracking-widest uppercase mt-0.5">SISTEMA ATIVO</p>
+        </div>
       </div>
-      <div class="flex flex-wrap items-center gap-4">
-        <div class="bg-[#030308] px-5 py-2.5 rounded-lg border border-purple-900/50">
-          <span class="text-[10px] text-gray-400 uppercase tracking-widest block">Saldo Ghost Bank</span>
-          <span id="bal-brl" class="text-emerald-400 font-extrabold text-lg">R$ 15.750,00</span>
+      <div class="flex flex-wrap items-center gap-4 w-full md:w-auto justify-end">
+        <div class="bg-[#020205] px-5 py-2.5 rounded-xl border border-purple-900/40 min-w-[140px]">
+          <span class="text-[9px] text-gray-400 uppercase tracking-widest block font-mono">Saldo Líquido</span>
+          <span id="bal-brl" class="text-emerald-400 font-black text-lg font-mono">R$ 0,00</span>
         </div>
-        <div class="bg-[#030308] px-5 py-2.5 rounded-lg border border-purple-900/50">
-          <span class="text-[10px] text-gray-400 uppercase tracking-widest block">Moedas Ghost Coins</span>
-          <span id="bal-gc" class="text-purple-400 font-extrabold text-lg">8.250 GC</span>
+        <div class="bg-[#020205] px-5 py-2.5 rounded-xl border border-purple-900/40 min-w-[140px]">
+          <span class="text-[9px] text-gray-400 uppercase tracking-widest block font-mono">Ghost Coins</span>
+          <span id="bal-gc" class="text-purple-400 font-black text-lg font-mono">0 GC</span>
         </div>
-        <button onclick="logout()" class="click-pop px-4 py-2.5 bg-red-950/40 border border-red-800/80 rounded-lg text-xs font-bold text-red-400 hover:bg-red-900/40 transition">LOGOUT</button>
+        <button onclick="logout()" class="btn-animate px-4 py-3 bg-red-950/30 border border-red-900/60 rounded-xl text-xs font-bold text-red-400 transition">DESCONECTAR</button>
       </div>
     </header>
 
-    <nav class="flex space-x-2 border-b border-purple-900/40 pb-1">
-      <button id="btn-tab-store" onclick="switchTab('store')" class="click-pop px-6 py-2.5 text-sm font-black border-b-2 border-purple-500 text-purple-400">GHOST STORE</button>
-      <button id="btn-tab-bank" onclick="switchTab('bank')" class="click-pop px-6 py-2.5 text-sm font-bold text-gray-400 hover:text-white">GHOST BANK</button>
-      <button id="tab-master" onclick="switchTab('master')" class="click-pop hidden px-6 py-2.5 text-sm font-bold text-red-400 hover:text-red-300">⚙️ PAINEL MASTER</button>
+    <nav class="flex space-x-2 border-b border-purple-900/30 pb-1">
+      <button id="btn-tab-store" onclick="switchTab('store')" class="btn-animate px-6 py-3 text-xs font-black tracking-widest border-b-2 border-purple-500 text-purple-400">GHOST STORE</button>
+      <button id="btn-tab-bank" onclick="switchTab('bank')" class="btn-animate px-6 py-3 text-xs font-bold text-gray-400 tracking-widest hover:text-white">GHOST BANK</button>
+      <button id="tab-master" onclick="switchTab('master')" class="btn-animate hidden px-6 py-3 text-xs font-bold text-red-400 tracking-widest hover:text-red-300">⚙️ CONTROLE MASTER</button>
     </nav>
 
     <div id="section-store" class="grid grid-cols-1 lg:grid-cols-4 gap-6">
       <div class="lg:col-span-3 space-y-4">
-        <h3 class="text-lg font-black tracking-widest text-purple-400">ITENS EM DESTAQUE</h3>
-        <div id="store-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          </div>
+        <h3 class="text-sm font-black tracking-widest text-purple-400 uppercase">Vitrine de Artefatos Identificados</h3>
+        <div id="store-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
       </div>
       
       <div class="space-y-4">
-        <div class="bg-[#090914] p-5 rounded-xl border border-purple-900/40 space-y-3">
-          <h4 class="text-xs font-bold uppercase tracking-wider text-gray-300 border-b border-purple-900/40 pb-2">Resgatar Promoção</h4>
-          <input id="redeem-input" type="text" placeholder="GHOST-XXXX" class="w-full bg-[#030308] p-3 rounded-lg border border-purple-900/60 text-center uppercase tracking-widest font-mono text-sm">
-          <button onclick="redeemCode()" class="click-pop w-full bg-purple-600 hover:bg-purple-500 p-2.5 rounded-lg text-xs font-bold transition">ATIVAR CÓDIGO</button>
+        <div class="bg-[#07070f] p-5 rounded-2xl border border-purple-900/40 space-y-3 shadow-lg">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-300 font-mono border-b border-purple-900/20 pb-2">Ativar Chave Promocional</h4>
+          <input id="redeem-input" type="text" placeholder="GHOST-XXXX" class="w-full bg-[#020205] p-3 rounded-xl border border-purple-900/60 text-center uppercase tracking-widest font-mono text-sm text-white">
+          <button onclick="redeemCode()" class="btn-animate w-full bg-purple-600 hover:bg-purple-500 p-3 rounded-xl text-xs font-black tracking-widest transition">RESGATAR BENEFÍCIO</button>
         </div>
 
-        <div class="bg-[#090914] p-5 rounded-xl border border-purple-900/40">
-          <h4 class="text-xs font-bold uppercase tracking-wider text-gray-300 border-b border-purple-900/40 pb-2 mb-3">Tabela de Raridades</h4>
-          <div class="space-y-2 text-xs font-mono">
-            <div class="flex justify-between p-2 bg-[#030308] border border-gray-900 rounded"><span>COMUM</span><span class="text-gray-400">60%</span></div>
-            <div class="flex justify-between p-2 bg-[#030308] border border-blue-900/60 text-blue-400"><span>RARO</span><span>25%</span></div>
-            <div class="flex justify-between p-2 bg-[#030308] border border-purple-900/60 text-purple-400"><span>ÉPICO</span><span>10%</span></div>
-            <div class="flex justify-between p-2 bg-[#030308] border border-yellow-900/60 text-yellow-500"><span>LENDÁRIO</span><span>4%</span></div>
-            <div class="flex justify-between p-2 bg-[#030308] border border-red-900/60 text-red-500"><span>MÍTICO</span><span>1%</span></div>
+        <div class="bg-[#07070f] p-5 rounded-2xl border border-purple-900/40 shadow-lg">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-300 font-mono border-b border-purple-900/20 pb-2 mb-3">Indexador de Ativos</h4>
+          <div class="space-y-2 text-[11px] font-mono">
+            <div class="flex justify-between p-2 bg-[#020205] border border-blue-900/40 text-blue-400 rounded-lg"><span>ÉPICO</span><span>10% CHANCE</span></div>
+            <div class="flex justify-between p-2 bg-[#020205] border border-yellow-900/40 text-yellow-500 rounded-lg"><span>LENDÁRIO</span><span>4% CHANCE</span></div>
+            <div class="flex justify-between p-2 bg-[#020205] border border-red-900/40 text-red-500 rounded-lg"><span>MÍTICO</span><span>1% CHANCE</span></div>
           </div>
         </div>
 
-        <a href="https://api.whatsapp.com/send?phone=5500000000000&text=Suporte%20Ghost%20Store" target="_blank" class="click-pop block w-full bg-emerald-600 hover:bg-emerald-500 p-3 rounded-xl font-bold text-xs text-center tracking-widest shadow-lg transition">
-          💬 SUPORTE WHATSAPP 24/7
+        <a href="https://api.whatsapp.com/send?phone=5500000000000&text=Suporte" target="_blank" class="btn-animate block w-full bg-emerald-600 hover:bg-emerald-500 p-3.5 rounded-2xl font-black text-xs text-center tracking-widest shadow-xl transition">
+          💬 ACIONAR SUPORTE CRIPTOGRAFADO
         </a>
       </div>
     </div>
 
     <div id="section-bank" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="md:col-span-2 bg-[#090914] p-6 rounded-xl border border-purple-900/40 space-y-6">
-        <h3 class="text-lg font-black tracking-widest text-emerald-400 uppercase">Ghost Bank Central</h3>
+      <div class="md:col-span-2 bg-[#07070f] p-6 rounded-2xl border border-purple-900/40 space-y-6 shadow-lg">
+        <h3 class="text-sm font-black tracking-widest text-emerald-400 uppercase">Módulo do Sistema Ghost Bank</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="bg-[#030308] p-4 rounded-xl border border-purple-900/30">
-            <h4 class="text-xs font-bold text-gray-400 mb-3 uppercase">Conversão Instantânea de GC</h4>
+          <div class="bg-[#020205] p-5 rounded-xl border border-purple-900/30">
+            <h4 class="text-xs font-bold text-gray-300 mb-3 font-mono">Câmbio e Liquidação de GC</h4>
             <div class="flex space-x-2">
-              <input id="buy-gc-amount" type="number" placeholder="Quantidade GC" class="w-full bg-[#090914] p-2.5 rounded-lg border border-purple-900 text-sm focus:outline-none">
-              <button onclick="buyGhostCoins()" class="click-pop bg-emerald-600 hover:bg-emerald-500 px-4 rounded-lg font-bold text-xs transition">ADQUIRIR</button>
+              <input id="buy-gc-amount" type="number" placeholder="Volume de GC" class="w-full bg-[#07070f] p-3 rounded-xl border border-purple-900 text-xs font-mono focus:outline-none text-white">
+              <button onclick="buyGhostCoins()" class="btn-animate bg-emerald-600 hover:bg-emerald-500 px-4 rounded-xl font-black text-xs transition">CONVERTER</button>
             </div>
-            <span class="text-[10px] text-zinc-500 block mt-1.5 font-mono">Cotação fixa: 1 GC = R$ 0,10</span>
+            <span class="text-[10px] text-zinc-500 block mt-2 font-mono">Taxa de paridade: 1 GC = R$ 0,10 BRL</span>
           </div>
-          <div class="bg-[#030308] p-4 rounded-xl border border-purple-900/30 flex flex-col justify-center">
-            <span class="text-[10px] text-zinc-400 uppercase tracking-wider block">Análise de Risco</span>
-            <span class="text-lg font-black text-emerald-400 mt-1">82% • SAÚDE ÓTIMA</span>
-          </div>
-        </div>
-        <div>
-          <h4 class="text-xs font-bold uppercase text-purple-400 mb-3 tracking-widest">Extrato Operacional Recente</h4>
-          <div class="space-y-2 text-xs font-mono">
-            <div class="flex justify-between bg-[#030308] p-3 rounded-lg border border-zinc-900"><span>PIX RECEBIDO DO SISTEMA</span><span class="text-emerald-400">+ R$ 850,00</span></div>
-            <div class="flex justify-between bg-[#030308] p-3 rounded-lg border border-zinc-900"><span>TED TRANSFERÊNCIA EFETUADA</span><span class="text-red-400">- R$ 120,00</span></div>
-            <div class="flex justify-between bg-[#030308] p-3 rounded-lg border border-zinc-900"><span>PAGAMENTO CARTÃO GHOST</span><span class="text-red-400">- R$ 45,90</span></div>
+          <div class="bg-[#020205] p-5 rounded-xl border border-purple-900/30 flex flex-col justify-center">
+            <span class="text-[10px] text-zinc-400 uppercase font-mono tracking-wider block">Integridade da Conta</span>
+            <span class="text-xl font-black text-emerald-400 font-mono mt-1">98.4% • ULTRA SEGURA</span>
           </div>
         </div>
       </div>
 
-      <div class="bg-[#090914] p-6 rounded-xl border border-purple-900/40 flex flex-col justify-between">
+      <div class="bg-[#07070f] p-6 rounded-2xl border border-purple-900/40 flex flex-col justify-between shadow-lg">
         <div>
-          <h3 class="text-xs font-bold tracking-widest text-zinc-400 uppercase mb-4">Cartão de Crédito Ativo</h3>
-          <div class="bg-gradient-to-br from-purple-950/40 via-zinc-950 to-black p-5 rounded-2xl border border-purple-500/30 relative h-44 shadow-inner">
-            <span class="absolute top-4 right-4 text-[9px] bg-purple-900/50 text-purple-300 font-mono px-2 py-0.5 rounded border border-purple-500/30 uppercase">Black Edition</span>
-            <div class="w-8 h-6 bg-yellow-600/60 rounded-md mb-6 border border-yellow-500/30"></div>
-            <p class="text-lg font-mono tracking-widest text-zinc-200">•••• •••• •••• 1337</p>
-            <p class="text-[10px] text-zinc-500 uppercase tracking-widest mt-4">GHOST BANK</p>
+          <h3 class="text-[10px] font-bold tracking-widest text-zinc-400 uppercase mb-4 font-mono">Dispositivo Magnético de Crédito</h3>
+          <div class="bg-gradient-to-br from-purple-950/50 via-neutral-950 to-black p-5 rounded-2xl border border-purple-500/40 relative h-44 shadow-2xl overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-purple-600/10 rounded-full blur-2xl"></div>
+            <span class="absolute top-4 right-4 text-[9px] bg-purple-900/40 text-purple-300 font-mono px-2 py-0.5 rounded border border-purple-500/20 uppercase tracking-widest">RENDER BLACK</span>
+            <div class="w-9 h-7 bg-gradient-to-r from-amber-500 to-yellow-600 rounded-md mb-6 border border-yellow-500/20 shadow-md"></div>
+            <p class="text-md font-mono tracking-widest text-zinc-200">•••• •••• •••• 7777</p>
+            <p class="text-[9px] text-zinc-500 uppercase tracking-widest mt-5 font-mono">SISTEMA GHOST BANK</p>
           </div>
-        </div>
-        <div class="mt-6 pt-4 border-t border-purple-900/40">
-          <span class="text-[10px] text-zinc-400 uppercase tracking-widest block">Limite Concedido</span>
-          <span class="text-xl font-black text-zinc-100 mt-1 block">R$ 7.500,00</span>
         </div>
       </div>
     </div>
 
     <div id="section-master" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div class="bg-[#090914] p-6 rounded-xl border border-red-900/40 space-y-4">
-        <h3 class="text-md font-black text-red-400 uppercase tracking-widest">Publicar Novo Produto</h3>
+      <div class="bg-[#07070f] p-6 rounded-2xl border border-red-900/40 space-y-4 shadow-lg">
+        <h3 class="text-sm font-black text-red-400 uppercase tracking-widest">Forjar e Publicar Item</h3>
         <div>
-          <label class="text-[10px] text-zinc-400 uppercase block mb-1">Identificação do Item</label>
-          <input id="prod-name" type="text" class="w-full bg-[#030308] p-2.5 rounded-lg border border-purple-900/60 text-sm">
+          <label class="text-[10px] text-zinc-400 uppercase font-mono block mb-1">Nome do Artefato</label>
+          <input id="prod-name" type="text" placeholder="Nome" class="w-full bg-[#020205] p-3 rounded-xl border border-purple-900/60 text-xs text-white font-mono">
         </div>
         <div>
-          <label class="text-[10px] text-zinc-400 uppercase block mb-1">Raridade Mapeada</label>
-          <select id="prod-rarity" class="w-full bg-[#030308] p-2.5 rounded-lg border border-purple-900/60 text-sm text-zinc-300">
-            <option value="Comum">Comum (60%)</option>
-            <option value="Raro">Raro (25%)</option>
-            <option value="Épico">Épico (10%)</option>
-            <option value="Lendário">Lendário (4%)</option>
-            <option value="Mítico">Mítico (1%)</option>
+          <label class="text-[10px] text-zinc-400 uppercase font-mono block mb-1">Raridade Alocada</label>
+          <select id="prod-rarity" class="w-full bg-[#020205] p-3 rounded-xl border border-purple-900/60 text-xs text-zinc-300 font-mono">
+            <option value="Épico">Épico (Roxo)</option>
+            <option value="Lendário">Lendário (Dourado)</option>
+            <option value="Mítico">Mítico (Vermelho)</option>
           </select>
         </div>
         <div>
-          <label class="text-[10px] text-zinc-400 uppercase block mb-1">Preço Operacional (GC)</label>
-          <input id="prod-price" type="number" class="w-full bg-[#030308] p-2.5 rounded-lg border border-purple-900/60 text-sm">
+          <label class="text-[10px] text-zinc-400 uppercase font-mono block mb-1">Valor Comercial (GC)</label>
+          <input id="prod-price" type="number" placeholder="Preço" class="w-full bg-[#020205] p-3 rounded-xl border border-purple-900/60 text-xs text-white font-mono">
         </div>
         <div>
-          <label class="text-[10px] text-zinc-400 uppercase block mb-1">Arquivo de Imagem</label>
-          <input id="prod-image" type="file" class="w-full bg-[#030308] p-2 rounded-lg border border-purple-900/60 text-xs text-zinc-400">
+          <label class="text-[10px] text-zinc-400 uppercase font-mono block mb-1">Upload da Imagem do Print</label>
+          <input id="prod-image" type="file" class="w-full bg-[#020205] p-2 rounded-xl border border-purple-900/60 text-xs text-zinc-400 cursor-pointer">
         </div>
-        <button onclick="publishProduct()" class="click-pop w-full bg-red-700 hover:bg-red-600 p-3 rounded-lg font-bold text-xs tracking-widest transition">PUBLICAR NA STORE</button>
+        <button onclick="publishProduct()" class="btn-animate w-full bg-red-700 hover:bg-red-600 p-3 rounded-xl font-black text-xs tracking-widest transition shadow-lg">INSERIR NO BANCO DE DADOS</button>
       </div>
 
-      <div class="bg-[#090914] p-6 rounded-xl border border-red-900/40 space-y-4 flex flex-col justify-between">
+      <div class="bg-[#07070f] p-6 rounded-2xl border border-red-900/40 space-y-4 flex flex-col justify-between shadow-lg">
         <div class="space-y-4">
-          <h3 class="text-md font-black text-red-400 uppercase tracking-widest">Gerador de Códigos</h3>
+          <h3 class="text-sm font-black text-red-400 uppercase tracking-widest">Geração de Tokens de Recarga</h3>
           <div>
-            <label class="text-[10px] text-zinc-400 uppercase block mb-1">Valor Nominal</label>
-            <input id="promo-amount" type="number" class="w-full bg-[#030308] p-2.5 rounded-lg border border-purple-900/60 text-sm">
+            <label class="text-[10px] text-zinc-400 uppercase font-mono block mb-1">Carga Nominal</label>
+            <input id="promo-amount" type="number" placeholder="Ex: 500" class="w-full bg-[#020205] p-3 rounded-xl border border-purple-900/60 text-xs text-white font-mono">
           </div>
           <div>
-            <label class="text-[10px] text-zinc-400 uppercase block mb-1">Indexador de Moeda</label>
-            <select id="promo-type" class="w-full bg-[#030308] p-2.5 rounded-lg border border-purple-900/60 text-sm text-zinc-300">
+            <label class="text-[10px] text-zinc-400 uppercase font-mono block mb-1">Moeda Vinculada</label>
+            <select id="promo-type" class="w-full bg-[#020205] p-3 rounded-xl border border-purple-900/60 text-xs text-zinc-300 font-mono">
               <option value="GC">Ghost Coins (GC)</option>
-              <option value="BRL">Saldo Bancário (R$)</option>
+              <option value="BRL">Moeda Corrente (R$)</option>
             </select>
           </div>
-          <button onclick="generatePromoCode()" class="click-pop w-full bg-purple-700 hover:bg-purple-600 p-3 rounded-lg font-bold text-xs tracking-widest transition">GERAR CUPOM ÚNICO</button>
+          <button onclick="generatePromoCode()" class="btn-animate w-full bg-purple-700 hover:bg-purple-600 p-3 rounded-xl font-black text-xs tracking-widest transition shadow-lg">GERAR HASH</button>
         </div>
-        <div class="bg-[#030308] p-4 rounded-xl border border-dashed border-purple-500/40 text-center">
-          <span class="text-[9px] text-zinc-500 uppercase tracking-widest block mb-1">Token Gerado</span>
-          <div id="generated-code-display" class="font-mono text-xl font-bold text-yellow-400 tracking-widest">- - - - - -</div>
+        <div class="bg-[#020205] p-4 rounded-xl border border-dashed border-purple-500/30 text-center">
+          <span class="text-[9px] text-zinc-500 uppercase tracking-widest block font-mono mb-1">Hash Ativo</span>
+          <div id="generated-code-display" class="font-mono text-xl font-bold text-yellow-400 tracking-widest uppercase">-------</div>
         </div>
       </div>
     </div>
-
   </div>
+
+  <footer class="text-center text-[10px] text-zinc-600 font-mono mt-12 py-4 border-t border-zinc-950">
+    GHOST ECOSYSTEM V26 • DISPOSITIVO TOTALMENTE OPERACIONAL NO RENDER
+  </footer>
 
   <script>
     let authToken = "";
     let userRole = "";
 
+    function showToast(text) {
+      const toast = document.getElementById("toast");
+      document.getElementById("toast-text").innerText = text;
+      toast.classList.remove("hidden", "translate-x-80");
+      setTimeout(() => {
+        toast.classList.add("translate-x-80");
+        setTimeout(() => toast.classList.add("hidden"), 300);
+      }, 3000);
+    }
+
     async function login() {
       const username = document.getElementById("auth-user").value;
       const password = document.getElementById("auth-pass").value;
+      
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password })
       });
       const data = await res.json();
-      if(data.error) return alert(data.error);
+      if(data.error) return showToast("❌ ERRO: " + data.error);
       
       authToken = data.token;
       userRole = data.role;
+      showToast("🔒 ACESSO CONCEDIDO À MALHA");
       setupSession();
     }
 
@@ -215,14 +236,15 @@
       const username = document.getElementById("auth-user").value;
       const password = document.getElementById("auth-pass").value;
       const isMaster = document.getElementById("auth-master").checked;
+      
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password, isMaster })
       });
       const data = await res.json();
-      if(data.error) return alert(data.error);
-      alert("Registro efetuado com sucesso.");
+      if(data.error) return showToast("❌ FALHA: " + data.error);
+      showToast("📝 IDENTIDADE CRIPTOGRAFADA REGISTADA");
     }
 
     function logout() {
@@ -250,7 +272,7 @@
       if(data.error) return logout();
 
       document.getElementById("display-username").innerText = data.username;
-      document.getElementById("display-role").innerText = `CONTA LEVEL 45 • ${data.role}`;
+      document.getElementById("display-role").innerText = `NÍVEL OPERACIONAL 45 • ${data.role}`;
       document.getElementById("bal-brl").innerText = `R$ ${data.saldoBancario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
       document.getElementById("bal-gc").innerText = `${data.ghostCoins.toLocaleString('pt-BR')} GC`;
       loadProducts();
@@ -270,17 +292,17 @@
         if(p.rarity === "Mítico") { borderClass = "neon-glow-red"; textRarityClass = "text-red-500"; }
 
         container.innerHTML += `
-          <div class="bg-[#090914] p-4 rounded-xl ${borderClass} click-pop flex flex-col justify-between cursor-pointer transition-all duration-200" onclick="alert('Item: ${p.name}\\nRaridade: ${p.rarity}')">
-            <div class="w-full h-36 rounded-lg overflow-hidden bg-black/40 relative mb-3">
+          <div class="bg-[#07070f] p-4 rounded-2xl ${borderClass} card-click flash-active flex flex-col justify-between cursor-pointer" onclick="showToast('🔮 INDENTIFICADO: ${p.name}')">
+            <div class="w-full h-36 rounded-xl overflow-hidden bg-black/60 relative mb-3 border border-zinc-900">
               <img src="${p.image}" class="w-full h-full object-cover">
             </div>
             <div>
               <h4 class="font-black text-sm uppercase tracking-wide text-zinc-100">${p.name}</h4>
-              <p class="text-[10px] font-mono tracking-widest ${textRarityClass} mt-0.5 font-bold uppercase">${p.rarity}</p>
+              <p class="text-[9px] font-mono tracking-widest ${textRarityClass} mt-0.5 font-bold uppercase">${p.rarity}</p>
             </div>
-            <div class="mt-4 pt-2.5 border-t border-purple-900/40 flex justify-between items-center">
-              <span class="text-sm font-black text-purple-400">${p.price.toLocaleString('pt-BR')} GC</span>
-              <span class="text-[10px] bg-purple-950 border border-purple-700/60 text-purple-300 font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">Adquirir</span>
+            <div class="mt-4 pt-3 border-t border-purple-900/20 flex justify-between items-center">
+              <span class="text-xs font-black text-purple-400 font-mono">${p.price.toLocaleString('pt-BR')} GC</span>
+              <span class="text-[9px] bg-purple-950 border border-purple-800 text-purple-300 font-bold px-3 py-1.5 rounded-lg uppercase tracking-wider btn-animate">Comprar</span>
             </div>
           </div>
         `;
@@ -293,7 +315,7 @@
       const price = document.getElementById("prod-price").value;
       const fileInput = document.getElementById("prod-image").files[0];
 
-      if(!name || !rarity || !price || !fileInput) return alert("Faltam parâmetros.");
+      if(!name || !rarity || !price || !fileInput) return showToast("⚠️ ALERTA: Preencha todos os campos.");
 
       const formData = new FormData();
       formData.append("name", name);
@@ -307,9 +329,9 @@
         body: formData
       });
       const data = await res.json();
-      if(data.error) return alert(data.error);
+      if(data.error) return showToast("❌ ERRO: " + data.error);
 
-      alert("Item adicionado ao catálogo.");
+      showToast("🛠️ ARTEFATO PUBLICADO");
       refreshData();
     }
 
@@ -318,15 +340,11 @@
       const type = document.getElementById("promo-type").value;
       const res = await fetch("/api/admin/generate-code", {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${authToken}`
-        },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authToken}` },
         body: JSON.stringify({ amount, type })
       });
       const data = await res.json();
-      if(data.error) return alert(data.error);
-
+      if(data.error) return showToast("❌ ERRO: " + data.error);
       document.getElementById("generated-code-display").innerText = data.code;
     }
 
@@ -334,16 +352,12 @@
       const code = document.getElementById("redeem-input").value;
       const res = await fetch("/api/user/redeem-code", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${authToken}`
-        },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authToken}` },
         body: JSON.stringify({ code })
       });
       const data = await res.json();
-      if(data.error) return alert(data.error);
-
-      alert(data.message);
+      if(data.error) return showToast("❌ " + data.error);
+      showToast("💰 " + data.message);
       refreshData();
     }
 
@@ -351,16 +365,12 @@
       const amountGC = document.getElementById("buy-gc-amount").value;
       const res = await fetch("/api/bank/buy-gc", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${authToken}`
-        },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authToken}` },
         body: JSON.stringify({ amountGC })
       });
       const data = await res.json();
-      if(data.error) return alert(data.error);
-
-      alert("Transação financeira concluída.");
+      if(data.error) return showToast("❌ " + data.error);
+      showToast("🪙 CONVERSÃO CONCLUÍDA");
       refreshData();
     }
 
@@ -368,14 +378,7 @@
       document.getElementById("section-store").classList.add("hidden");
       document.getElementById("section-bank").classList.add("hidden");
       document.getElementById("section-master").classList.add("hidden");
-      
-      document.getElementById("btn-tab-store").className = "click-pop px-6 py-2.5 text-sm font-bold text-gray-400 hover:text-white";
-      document.getElementById("btn-tab-bank").className = "click-pop px-6 py-2.5 text-sm font-bold text-gray-400 hover:text-white";
-      
       document.getElementById(`section-${tab}`).classList.remove("hidden");
-      if(tab === 'store' || tab === 'bank') {
-        document.getElementById(`btn-tab-${tab}`).className = "click-pop px-6 py-2.5 text-sm font-black border-b-2 border-purple-500 text-purple-400";
-      }
     }
   </script>
 </body>
